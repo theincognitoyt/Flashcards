@@ -6,3 +6,6 @@ This basic program allows you to keep daily track on learning your own flashcard
 f.e. `string path="A:\\Adam\\Bob\\Cymon\\Damian\\";` I tried to fix it via launch.json and tasks.json in .vscode folder, by changing cwd in VScode's settings. I'll try to fix it later.
 - I know about a bug that occurs when next year will happen, I'll fix it soon.
 - If you notice any bugs give me a note.
+
+TODO:
+-fix bug in play with random option on
