@@ -15,8 +15,8 @@ struct Node{
     string desc;//additional description f.e. of the word
     int lvl;//lvl represents a box from Leitner system.
     bool done;//it shows if it this was attempted this day; 0 - not done, 1 - done
-    struct Node* next;
-};
+    string source;
+    struct Node* next;};
 Node* L[6];
 unsigned l_len(Node* p){
   unsigned c = 0;
@@ -25,8 +25,7 @@ unsigned l_len(Node* p){
     c++;
     p = p->next;
   }
-  return c;
-}
+  return c;}
 unsigned l_len_undone(Node* p){
   unsigned c = 0;
   while(p)
@@ -34,15 +33,16 @@ unsigned l_len_undone(Node* p){
     if(p->done==0)c++;
     p = p->next;
   }
-  return c;
-}
-void l_push_front(Node * & head, string word, string defi, string desc, int lvl){
+  return c;}
+void l_push_front(Node * & head, string word, string defi, string desc, int lvl, bool done, string source){
   Node * p = new Node;
   p->word = word;
   p->defi = defi;
   p->desc = desc;
   p->next = head;
   p->lvl = lvl;
+  p->done = done;
+  p->source = source;
   head = p;
 }
 void l_pop_front(Node * & head){
@@ -54,7 +54,7 @@ void l_pop_front(Node * & head){
     delete p;
   }
 }
-void determineList(string word, string defi, string desc, int lvl, bool done){
+void determineList(string word, string defi, string desc, int lvl, bool done, string source){
   Node * p, * e;
   e = new Node;
   e->next = NULL;
@@ -63,9 +63,10 @@ void determineList(string word, string defi, string desc, int lvl, bool done){
   e->desc = desc;
   e->lvl = lvl;
   e->done = done;
+  e->source = source;
     p=L[lvl];
     if(l_len(p)==0)
-    l_push_front(L[lvl],word,defi,desc,lvl);
+    l_push_front(L[lvl],word,defi,desc,lvl, done, source);
     else if(p)
   {
      while(p->next) p = p->next;
@@ -74,7 +75,7 @@ void determineList(string word, string defi, string desc, int lvl, bool done){
   }
   else p = e;
 }
-void l_push_back(Node * & head, string word, string defi, string desc, int lvl, bool done){
+void l_push_back(Node * & head, string word, string defi, string desc, int lvl, bool done, string source){
   Node * p, * e;
   e = new Node;
   e->next = NULL;
@@ -83,6 +84,7 @@ void l_push_back(Node * & head, string word, string defi, string desc, int lvl, 
   e->desc = desc;
   e->lvl = lvl;
   e->done = done;
+  e->source = source;
   p = head;
   if(p)
   {
@@ -122,13 +124,11 @@ void Inspect(int lvl){
   int i=1;
   while(p)
   {
-  cout<<i<<". "<<p->word<<", "<<p->defi<<", "<<p->desc<<", "<<p->lvl<<", "<<p->done<<endl;
+  cout<<i<<". "<<p->word<<", "<<p->defi<<", "<<p->desc<<", "<<p->lvl<<", "<<p->done<<", "<<p->source<<endl;
   p=p->next;
   i++;
-  }
-}
-int main()
-{
+  }}
+int main(){
 SetConsoleOutputCP(CP_UTF8);
   for(int i=0; i<6; i++) L[i] = NULL;
     time_t timestamp = time(&timestamp);
@@ -145,7 +145,7 @@ SetConsoleOutputCP(CP_UTF8);
     string Temptxt;
     while(getline(fileL,Temptxt))
     {
-      string Tempworda, Tempdefia, Tempdesca, Templvla, TempdoneA;
+      string Tempworda, Tempdefia, Tempdesca, Templvla, TempdoneA, Tempsource;
       string delimiter = "; ";
       size_t start = 0;
       size_t end;
@@ -167,9 +167,13 @@ SetConsoleOutputCP(CP_UTF8);
       start = end + delimiter.length();
       end = Temptxt.find(delimiter, start);
       TempdoneA = Temptxt.substr(start, end - start);
-      cout<<TempdoneA<<endl;
+      cout<<TempdoneA<<", ";
       start = end + delimiter.length();
-      determineList(Tempworda,Tempdefia,Tempdesca,stoi(Templvla,0,10),stoi(TempdoneA,0,10));
+      end = Temptxt.find(delimiter, start);
+      Tempsource = Temptxt.substr(start, end - start);
+      cout<<Tempsource<<endl;
+      start = end + delimiter.length();
+      determineList(Tempworda,Tempdefia,Tempdesca,stoi(Templvla,0,10),stoi(TempdoneA,0,10), Tempsource);
     }
     fileL.close();
     if(stoi(tajm)==datetime.tm_yday)cout<<"same day"<<endl;
@@ -225,8 +229,8 @@ SetConsoleOutputCP(CP_UTF8);
                       if(p->lvl != 5) {
                           p->lvl += 1;
                           p->done=1;
-                          l_push_back(L[p->lvl], p->word, p->defi, p->desc, p->lvl,p->done);
-                          l_remove(L[1], p);
+                          l_push_back(L[p->lvl], p->word, p->defi, p->desc, p->lvl,p->done, p->source);
+                          l_remove(L[p->lvl-1], p);
                       }
                     } else if(ans == "333") {
                       break;
@@ -255,6 +259,9 @@ SetConsoleOutputCP(CP_UTF8);
                     int rando=rand()%undoneNum;
                     for(int j=0;j<rando;j++){
                       p=p->next;
+                      if(p == NULL) {
+                          p = L[i]; 
+                      }
                       if(p->next==NULL&&undoneNum!=0)p=L[i];
                     }
                     if(p->done==1){
@@ -276,8 +283,8 @@ SetConsoleOutputCP(CP_UTF8);
                       if(p->lvl != 5) {
                           p->lvl += 1;
                           p->done=1;
-                          l_push_back(L[p->lvl], p->word, p->defi, p->desc, p->lvl,p->done);
-                          l_remove(L[1], p);
+                          l_push_back(L[p->lvl], p->word, p->defi, p->desc, p->lvl,p->done, p->source);
+                          l_remove(L[p->lvl-1], p);
                       }
                       undoneNum--;
                     } else if(ans == "333") {
@@ -323,7 +330,7 @@ SetConsoleOutputCP(CP_UTF8);
                     ifstream MyFile(path+name);
                     while(getline(MyFile, myText)){
                     //cout << myText;
-                    string Tempword, Tempdefi, Tempdesc, Templvl;
+                    string Tempword, Tempdefi, Tempdesc, Templvl,Tempsource;
                     string delimiter = "; ";
                     size_t start = 0;
                     size_t end;
@@ -339,8 +346,11 @@ SetConsoleOutputCP(CP_UTF8);
                     end = myText.find(delimiter, start);
                     Templvl='1';
                     start = end + delimiter.length();
-                    determineList(Tempword,Tempdefi,Tempdesc,stoi(Templvl,0,10),NULL);
-                    cout<<Tempword<<", "<<Tempdefi<<", "<<Tempdesc<<", "<<Templvl<<endl;
+                    end = myText.find(delimiter, start);
+                    Tempsource = name;
+                    start = end + delimiter.length();
+                    determineList(Tempword,Tempdefi,Tempdesc,stoi(Templvl,0,10),NULL,Tempsource);
+                    cout<<Tempword<<", "<<Tempdefi<<", "<<Tempdesc<<", "<<Templvl<<", "<<Tempsource<<endl;
                     }
                     MyFile.close();
                 }
@@ -436,11 +446,11 @@ SetConsoleOutputCP(CP_UTF8);
                 while(p)
                 {
                   //cout<<"<p->done:"<<p->done;
-                  if(p->lvl==-1163005939)cout<<"";
-                  else{
+                  //if(p->lvl==-1163005939)cout<<"";
+                  //else{
                     if(p->done==NULL)p->done=0;
-                  MyFile1<<p->word<<"; "<<p->defi<<"; "/*<<p->desc*/<<"; "<<p->lvl<<"; "<<p->done<<endl;
-                  }
+                  MyFile1<<p->word<<"; "<<p->defi<<"; "<<p->desc<<"; "<<p->lvl<<"; "<<p->done<<"; "<<p->source<<endl;
+                  //}
                   p=p->next;
                 }
               }
